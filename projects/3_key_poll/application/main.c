@@ -57,7 +57,7 @@ void user_gpio_init(void)
     gd_rvstar_led_init(LED_B);
     gd_rvstar_led_init(LED_R);
 
-    gd_rvstar_key_init(0, KEY_MODE_EXTI);
+    gd_rvstar_key_init(0, KEY_MODE_GPIO);
 }
 
 void rgb_toggle(int state)
