@@ -30,90 +30,67 @@
 
 ## 3.实验结果与代码分析
 
-入口在main函数
+```
+int main(void)
+{
+    int state = 0;
+    user_gpio_init();
 
-![main](figures/2/main.png)
-
-main函数中调用了`led_config();`函数
-
-该函数的实现如下：
+    while(1)
+    {
+        state++;
+        delay_1ms(1000);
+        rgb_toggle(state);
+    }
+}
 
 ```
-void led_config(void)
+
+main函数首先初始化了gpio，然后每一秒钟进行设置led的亮和灭。
+
+其中`user_gpio_init`可以看一下：
+
+```
+//gpio init
+void user_gpio_init(void)
 {
-    for(int i=0; i<LEDn; i++)
+    gd_rvstar_led_init(LED_G);
+    gd_rvstar_led_init(LED_B);
+    gd_rvstar_led_init(LED_R);
+}
+```
+
+这里初始化了三个gpio，通过这三个GPIO来控制LED的亮与灭。
+
+最后就是状态灯的变化函数：
+
+```
+void rgb_toggle(int state)
+{
+    int cur_state = state % 3;
+    if(cur_state == 0)
     {
-        gd_rvstar_led_init(i);
-        gd_rvstar_led_on(i);
-        delay_1ms(1000);
-        gd_rvstar_led_off(i);
+        LED_G_ON;
+        LED_B_OFF;
+        LED_R_OFF;
+    }
+
+    if(cur_state == 1)
+    {
+        LED_G_OFF;
+        LED_B_ON;
+        LED_R_OFF;
+    }
+
+    if(cur_state == 2)
+    {
+        LED_G_OFF;
+        LED_B_OFF;
+        LED_R_ON;
     }
 }
 ```
 
-首先`LEDn`在gd32vf103_rvstar.h中
-
-```
-/* rvstar board low layer led */
-#define LEDn                             3U
-```
-
-定义了三个LED。
-
-接着调用`gd_rvstar_led_init`初始化gpio。
-
-其实际的实现可以看如下的代码
-
-```
-/* Defines for LED functio/* Defines for LED / Key functions to new / general API */
-#define gd_rvstar_led_init         gd_led_init
-#define gd_rvstar_led_on           gd_led_on
-#define gd_rvstar_led_off          gd_led_off
-#define gd_rvstar_led_toggle       gd_led_toggle
-```
-
-实际上执行的是`gd_led_init`，现在看看该函数的实现
-
-```
-/* eval board low layer private functions */
-/*!
- *  \brief      configure led GPIO
- *  \param[in]  lednum: specify the led to be configured
- *  \arg        LED1
- *  \param[out] none
- *  \retval     none
- */
-void gd_led_init(led_typedef_enum lednum)
-{
-    /* enable the led clock */
-    rcu_periph_clock_enable(`[lednum]);
-    /* configure led GPIO port */
-    gpio_init(GPIO_PORT[lednum], GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN[lednum]);
-    GPIO_BOP(GPIO_PORT[lednum]) = GPIO_PIN[lednum];
-}
-```
-
-首先调用`rcu_periph_clock_enable`初始化对于的GPIO时钟。
-
-对于`GPIO_CLK`有如下的定义。
-
-```
-static const rcu_periph_enum GPIO_CLK[LEDn] = {LEDG_GPIO_CLK,LEDB_GPIO_CLK,LEDR_GPIO_CLK};
-```
-
-```
-#define LEDG_PIN                         GPIO_PIN_1
-#define LEDG_GPIO_PORT                   GPIOA
-#define LEDG_GPIO_CLK                    RCU_GPIOA
-
-#define LEDB_PIN                         GPIO_PIN_3
-#define LEDB_GPIO_PORT                   GPIOA
-#define LEDB_GPIO_CLK                    RCU_GPIOA
-
-#define LEDR_PIN                         GPIO_PIN_2
-#define LEDR_GPIO_PORT                   GPIOA
-#define LEDR_GPIO_CLK                    RCU_GPIOA
-```
 
 简单的说，就是LED绿灯对应的是PA1，LED蓝灯对应PA3，LED红灯对应PA2。
 
